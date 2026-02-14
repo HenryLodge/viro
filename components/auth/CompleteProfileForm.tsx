@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -42,12 +41,17 @@ export function CompleteProfileForm() {
 
   return (
     <div className="w-full max-w-sm space-y-6">
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-white/50">
         Choose your role to finish setting up your account.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Full name</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="fullName"
+            className="text-xs font-semibold uppercase tracking-wider text-white/50"
+          >
+            Full name
+          </Label>
           <Input
             id="fullName"
             type="text"
@@ -56,19 +60,22 @@ export function CompleteProfileForm() {
             onChange={(e) => setFullName(e.target.value)}
             autoComplete="name"
             disabled={loading}
+            className="h-11 rounded-lg border-white/10 bg-white/[0.06] text-white placeholder:text-white/30 focus-visible:ring-[hsl(195,65%,48%)] focus-visible:border-[hsl(195,65%,48%)]"
           />
         </div>
-        <div className="space-y-2">
-          <Label>I am a</Label>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-white/50">
+            I am a
+          </Label>
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setRole("patient")}
               className={cn(
-                "rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                "rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-all",
                 role === "patient"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background hover:bg-accent"
+                  ? "border-[hsl(195,65%,48%)] bg-[hsl(195,65%,48%)]/15 text-[hsl(195,65%,60%)]"
+                  : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20"
               )}
             >
               Patient
@@ -77,10 +84,10 @@ export function CompleteProfileForm() {
               type="button"
               onClick={() => setRole("provider")}
               className={cn(
-                "rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                "rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-all",
                 role === "provider"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background hover:bg-accent"
+                  ? "border-[hsl(195,65%,48%)] bg-[hsl(195,65%,48%)]/15 text-[hsl(195,65%,60%)]"
+                  : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20"
               )}
             >
               Provider
@@ -88,13 +95,17 @@ export function CompleteProfileForm() {
           </div>
         </div>
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-sm text-red-400 font-medium" role="alert">
             {error}
           </p>
         )}
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Please wait…" : "Continue"}
-        </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 rounded-lg bg-[hsl(195,65%,48%)] text-sm font-semibold text-white shadow-lg shadow-[hsl(195,65%,48%)]/25 hover:bg-[hsl(195,65%,42%)] disabled:opacity-50 transition-all"
+        >
+          {loading ? "Please wait\u2026" : "Continue"}
+        </button>
       </form>
     </div>
   );

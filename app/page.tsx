@@ -1,115 +1,139 @@
 import Link from "next/link";
+import { ViroLogo } from "@/components/ViroLogo";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container flex h-14 items-center justify-between px-4 sm:px-6">
-          <span className="font-semibold text-foreground">VIRO</span>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[hsl(218,50%,12%)] via-[hsl(218,48%,14%)] to-[hsl(218,45%,18%)]">
+      {/* ── Background layers ── */}
 
-      <main className="flex-1">
-        <section className="container px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-24 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            Viral Intelligence & Response Orchestrator
-          </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground sm:text-xl">
-            AI-powered triage, smart hospital routing, and real-time outbreak
-            intelligence — so the right patients get to the right care, fast.
+      {/* Subtle dot grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, hsl(195,65%,70%) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
+      {/* Large glowing blobs */}
+      <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[700px] w-[700px] rounded-full bg-[hsl(195,65%,48%)] opacity-[0.05] blur-[160px] animate-subtle-pulse" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-[500px] w-[500px] rounded-full bg-[hsl(218,60%,30%)] opacity-[0.08] blur-[120px]" />
+
+      {/* Radar / sonar rings — centered behind the logo */}
+      <div className="pointer-events-none absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="animate-radar-1 h-[400px] w-[400px] rounded-full border border-[hsl(195,65%,48%)]/20" />
+      </div>
+      <div className="pointer-events-none absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="animate-radar-2 h-[400px] w-[400px] rounded-full border border-[hsl(195,65%,48%)]/15" />
+      </div>
+      <div className="pointer-events-none absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="animate-radar-3 h-[400px] w-[400px] rounded-full border border-[hsl(195,65%,48%)]/10" />
+      </div>
+
+      {/* Floating micro-particles */}
+      <div className="pointer-events-none absolute bottom-0 left-[10%] h-2 w-2 rounded-full bg-[hsl(195,65%,55%)] animate-float-1" />
+      <div className="pointer-events-none absolute bottom-0 left-[25%] h-1.5 w-1.5 rounded-full bg-[hsl(195,80%,65%)] animate-float-2" />
+      <div className="pointer-events-none absolute bottom-0 left-[55%] h-2.5 w-2.5 rounded-full bg-[hsl(195,65%,50%)] animate-float-3" />
+      <div className="pointer-events-none absolute bottom-0 left-[75%] h-1.5 w-1.5 rounded-full bg-[hsl(195,70%,60%)] animate-float-4" />
+      <div className="pointer-events-none absolute bottom-0 left-[40%] h-2 w-2 rounded-full bg-[hsl(195,65%,55%)] animate-float-5" />
+      <div className="pointer-events-none absolute bottom-0 left-[88%] h-1 w-1 rounded-full bg-[hsl(195,80%,70%)] animate-float-6" />
+
+      {/* ── Content ── */}
+      <div className="relative z-10 flex flex-col items-center min-h-screen">
+        {/* Hero area */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-12 text-center max-w-2xl mx-auto">
+          {/* Logo */}
+          <div className="animate-fade-in-up">
+            <ViroLogo className="text-7xl sm:text-8xl" variant="light" />
+          </div>
+
+          {/* Tagline */}
+          <p className="animate-fade-in-up-d1 mt-5 text-[hsl(195,65%,55%)] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase">
+            Viral Intelligence &amp; Response Orchestrator
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+
+          {/* Description */}
+          <p className="animate-fade-in-up-d2 mt-6 text-[hsl(210,20%,65%)] text-base sm:text-lg leading-relaxed max-w-md">
+            Triage patients in seconds. Route to the right hospital.
+            Detect outbreaks before they cascade.
+          </p>
+
+          {/* CTA */}
+          <div className="animate-fade-in-up-d3 mt-10 flex flex-col sm:flex-row gap-3">
             <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              href="/login?tab=signup"
+              className="group inline-flex items-center justify-center rounded-xl bg-[hsl(195,65%,48%)] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[hsl(195,65%,48%)]/25 hover:shadow-[hsl(195,65%,48%)]/40 hover:bg-[hsl(195,65%,44%)] transition-all duration-300"
             >
               Get started
+              <svg
+                className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
+              </svg>
             </Link>
             <Link
-              href="/login"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-6 py-3 text-base font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+              href="/login?tab=signin"
+              className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-all duration-300"
             >
               Sign in
             </Link>
           </div>
-        </section>
-
-        <section className="border-t border-border/40 bg-muted/30 py-16 sm:py-20">
-          <div className="container px-4 sm:px-6">
-            <h2 className="text-center text-2xl font-semibold text-foreground sm:text-3xl">
-              One platform. Three layers of response.
-            </h2>
-            <div className="mt-12 grid gap-8 sm:grid-cols-3 sm:gap-10 max-w-4xl mx-auto">
-              <div className="rounded-xl border border-border bg-card p-6 text-center shadow-sm">
-                <span className="text-3xl font-bold text-primary">1</span>
-                <h3 className="mt-3 font-semibold text-foreground">
-                  Patient triage
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Submit symptoms and risk factors. AI returns an urgency tier
-                  and clear next steps in seconds.
-                </p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-6 text-center shadow-sm">
-                <span className="text-3xl font-bold text-primary">2</span>
-                <h3 className="mt-3 font-semibold text-foreground">
-                  Smart routing
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Get matched to nearby facilities by capacity, specialty, and
-                  wait time — not just distance.
-                </p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-6 text-center shadow-sm">
-                <span className="text-3xl font-bold text-primary">3</span>
-                <h3 className="mt-3 font-semibold text-foreground">
-                  Global intelligence
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Health teams see outbreak patterns, anomaly alerts, and
-                  cascading threats on a live globe.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-16 sm:py-20">
-          <div className="container px-4 sm:px-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              Built for InnovAIte 2026 · AINU Hackathon
-            </p>
-            <div className="mt-8">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Enter VIRO
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t border-border/40 py-6">
-        <div className="container px-4 sm:px-6 text-center text-sm text-muted-foreground">
-          VIRO — Viral Intelligence & Response Orchestrator
         </div>
-      </footer>
+
+        {/* ── Feature strip at the bottom ── */}
+        <div className="animate-fade-in-up-d4 w-full border-t border-white/[0.06] bg-white/[0.02] backdrop-blur-sm">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] px-6">
+            {/* Feature 1 */}
+            <div className="flex items-center gap-4 py-8 sm:py-10 sm:px-8">
+              <div className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(195,65%,48%)]/10 ring-1 ring-[hsl(195,65%,48%)]/20">
+                <svg className="h-5 w-5 text-[hsl(195,65%,55%)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714a2.25 2.25 0 0 0 .659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 0 1-1.591.659H9.061a2.25 2.25 0 0 1-1.591-.659L5 14.5m14 0V5.846a2.25 2.25 0 0 0-1.836-2.213M5 14.5V5.846a2.25 2.25 0 0 1 1.836-2.213" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white/90">AI Triage</p>
+                <p className="text-xs text-white/40 mt-0.5">Urgency tier in seconds</p>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="flex items-center gap-4 py-8 sm:py-10 sm:px-8">
+              <div className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(195,65%,48%)]/10 ring-1 ring-[hsl(195,65%,48%)]/20">
+                <svg className="h-5 w-5 text-[hsl(195,65%,55%)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white/90">Smart Routing</p>
+                <p className="text-xs text-white/40 mt-0.5">Capacity, specialty &amp; distance</p>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="flex items-center gap-4 py-8 sm:py-10 sm:px-8">
+              <div className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(195,65%,48%)]/10 ring-1 ring-[hsl(195,65%,48%)]/20">
+                <svg className="h-5 w-5 text-[hsl(195,65%,55%)]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A8.966 8.966 0 0 1 3 12c0-1.264.26-2.467.73-3.56" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white/90">Global Intelligence</p>
+                <p className="text-xs text-white/40 mt-0.5">Live outbreak monitoring</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

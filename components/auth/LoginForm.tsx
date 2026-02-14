@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -19,7 +17,10 @@ const ROLE_HOMES: Record<ProfileRole, string> = {
 
 export function LoginForm() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("signin");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
+
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -48,7 +49,7 @@ export function LoginForm() {
       return;
     }
     const profile = await res.json();
-    const home = ROLE_HOMES[profile.role as ProfileRole] ?? "/login";
+    const home = ROLE_HOMES[profile.role as ProfileRole] ?? "/";
     router.push(home);
     router.refresh();
   }
@@ -87,16 +88,17 @@ export function LoginForm() {
   const onSubmit = tab === "signin" ? handleSignIn : handleSignUp;
 
   return (
-    <div className="w-full max-w-sm space-y-6">
-      <div className="flex rounded-lg border border-border bg-muted/30 p-1">
+    <div className="w-full space-y-6">
+      {/* Tab toggle */}
+      <div className="flex rounded-xl bg-white/[0.06] p-1 ring-1 ring-white/[0.08]">
         <button
           type="button"
           onClick={() => { setTab("signin"); setError(null); }}
           className={cn(
-            "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all",
             tab === "signin"
-              ? "bg-background text-foreground shadow"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[hsl(195,65%,48%)] text-white shadow-sm"
+              : "text-white/50 hover:text-white/80"
           )}
         >
           Sign in
@@ -105,19 +107,25 @@ export function LoginForm() {
           type="button"
           onClick={() => { setTab("signup"); setError(null); }}
           className={cn(
-            "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all",
             tab === "signup"
-              ? "bg-background text-foreground shadow"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[hsl(195,65%,48%)] text-white shadow-sm"
+              : "text-white/50 hover:text-white/80"
           )}
         >
           Sign up
         </button>
       </div>
 
+      {/* Form */}
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-wider text-white/50"
+          >
+            Email
+          </Label>
           <Input
             id="email"
             type="email"
@@ -127,10 +135,17 @@ export function LoginForm() {
             required
             autoComplete="email"
             disabled={loading}
+            className="h-11 rounded-lg border-white/10 bg-white/[0.06] text-white placeholder:text-white/30 focus-visible:ring-[hsl(195,65%,48%)] focus-visible:border-[hsl(195,65%,48%)]"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="password"
+            className="text-xs font-semibold uppercase tracking-wider text-white/50"
+          >
+            Password
+          </Label>
           <Input
             id="password"
             type="password"
@@ -140,13 +155,19 @@ export function LoginForm() {
             autoComplete={tab === "signin" ? "current-password" : "new-password"}
             disabled={loading}
             minLength={6}
+            className="h-11 rounded-lg border-white/10 bg-white/[0.06] text-white placeholder:text-white/30 focus-visible:ring-[hsl(195,65%,48%)] focus-visible:border-[hsl(195,65%,48%)]"
           />
         </div>
 
         {tab === "signup" && (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full name</Label>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="fullName"
+                className="text-xs font-semibold uppercase tracking-wider text-white/50"
+              >
+                Full name
+              </Label>
               <Input
                 id="fullName"
                 type="text"
@@ -155,19 +176,23 @@ export function LoginForm() {
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
                 disabled={loading}
+                className="h-11 rounded-lg border-white/10 bg-white/[0.06] text-white placeholder:text-white/30 focus-visible:ring-[hsl(195,65%,48%)] focus-visible:border-[hsl(195,65%,48%)]"
               />
             </div>
-            <div className="space-y-2">
-              <Label>I am a</Label>
-              <div className="grid grid-cols-2 gap-2">
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                I am a
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole("patient")}
                   className={cn(
-                    "rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                    "rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-all",
                     role === "patient"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background hover:bg-accent"
+                      ? "border-[hsl(195,65%,48%)] bg-[hsl(195,65%,48%)]/15 text-[hsl(195,65%,60%)]"
+                      : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20"
                   )}
                 >
                   Patient
@@ -176,10 +201,10 @@ export function LoginForm() {
                   type="button"
                   onClick={() => setRole("provider")}
                   className={cn(
-                    "rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                    "rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-all",
                     role === "provider"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background hover:bg-accent"
+                      ? "border-[hsl(195,65%,48%)] bg-[hsl(195,65%,48%)]/15 text-[hsl(195,65%,60%)]"
+                      : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20"
                   )}
                 >
                   Provider
@@ -190,21 +215,23 @@ export function LoginForm() {
         )}
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-sm text-red-400 font-medium" role="alert">
             {error}
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Please wait…" : tab === "signin" ? "Sign in" : "Create account"}
-        </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 rounded-lg bg-[hsl(195,65%,48%)] text-sm font-semibold text-white shadow-lg shadow-[hsl(195,65%,48%)]/25 hover:bg-[hsl(195,65%,42%)] disabled:opacity-50 transition-all"
+        >
+          {loading
+            ? "Please wait\u2026"
+            : tab === "signin"
+              ? "Sign in"
+              : "Create account"}
+        </button>
       </form>
-
-      <p className="text-center text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground underline-offset-4 hover:underline">
-          ← Back to home
-        </Link>
-      </p>
     </div>
   );
 }
