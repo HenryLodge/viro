@@ -1,0 +1,59 @@
+# Cursor Rules — VIRO
+
+## Project Overview
+VIRO (Viral Intelligence & Response Orchestrator) is a three-layer AI-powered pandemic response platform built for a hackathon. It has two user roles: patients (intake → triage → hospital routing) and providers (real-time dashboard → globe visualization → anomaly alerts).
+
+## Tech Stack
+- Next.js 14 with App Router and TypeScript
+- Tailwind CSS + shadcn/ui for styling and components
+- Supabase for database, auth, real-time subscriptions, and edge functions
+- OpenAI GPT-4o for AI triage (called from Supabase Edge Functions)
+- Leaflet.js / react-leaflet for maps
+- Globe.gl for 3D globe visualization
+- Deployed on Vercel
+
+## General Rules
+- Use TypeScript throughout — no `any` types unless absolutely necessary
+- Use the Next.js App Router (`app/` directory), not the Pages Router
+- All components should be functional components with hooks
+- Keep components small and focused — one responsibility per component
+- Use server components by default, add `"use client"` only when needed (interactivity, hooks, browser APIs)
+- Colocate related files — keep page-specific components near their page
+
+## Styling
+- Use Tailwind utility classes for styling — no custom CSS files unless unavoidable
+- Use shadcn/ui components wherever possible instead of building from scratch
+- Keep the UI clean and minimal — this is a hackathon, polish matters but speed matters more
+- Patient-facing views should feel calming and clear — no information overload
+- Provider-facing views should feel data-rich and professional
+
+## Supabase
+- Use the Supabase client library (`@supabase/supabase-js`) for all database operations
+- Use Supabase Auth for authentication and role-based access
+- Use Supabase real-time subscriptions for live data updates on the provider dashboard
+- Edge functions should handle AI API calls and any server-side logic that shouldn't be exposed to the client
+- Keep environment variables in `.env.local` and never commit them
+
+## AI Integration
+- All AI calls go through Supabase Edge Functions — never call the OpenAI API directly from the client
+- Always use structured JSON output from GPT-4o (`response_format: { type: "json_object" }`)
+- Handle AI errors gracefully — show a fallback message to the user, never crash
+- Keep system prompts in a separate file or constant, not inline in the API call
+
+## Data
+- Use mock/seed data for hospitals, regions, and demo patients
+- Keep seed data in clearly labeled files
+- All location data should use lat/lng coordinates
+- Timestamps should use ISO format
+
+## Error Handling
+- Always handle loading, error, and empty states in UI components
+- Use try/catch for all async operations
+- Show user-friendly error messages, not raw errors
+
+## File Organization
+- Keep route handlers in `app/api/`
+- Keep shared utilities in `lib/`
+- Keep shared components in `components/`
+- Keep types/interfaces in `types/` or colocated with their usage
+- Keep seed/mock data in `data/`
