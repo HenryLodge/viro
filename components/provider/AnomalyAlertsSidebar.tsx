@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { ClusterAlert } from "@/lib/network-engine";
 
 /* ── Types ── */
 
@@ -88,8 +89,10 @@ function timeAgo(dateStr: string): string {
 
 export function AnomalyAlertsSidebar({
   regions,
+  clusterAlerts = [],
 }: {
   regions: RegionData[];
+  clusterAlerts?: ClusterAlert[];
 }) {
   const anomalies = regions
     .filter((r) => r.anomaly_flag)
@@ -102,6 +105,100 @@ export function AnomalyAlertsSidebar({
 
   return (
     <div className="space-y-6 h-full overflow-y-auto">
+      {/* ── Cluster Alerts (Network View) ── */}
+      {clusterAlerts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+              Cluster Alerts ({clusterAlerts.length})
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {clusterAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-white/90">
+                      {alert.cluster_label}
+                    </p>
+                    <p className="text-[11px] text-white/35">
+                      Updated {timeAgo(alert.created_at)}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ring-1",
+                      alert.growth_rate === "Rapid"
+                        ? "bg-red-500/15 text-red-400 ring-red-500/30"
+                        : alert.growth_rate === "Moderate"
+                          ? "bg-orange-500/15 text-orange-400 ring-orange-500/30"
+                          : "bg-yellow-500/15 text-yellow-300 ring-yellow-500/30"
+                    )}
+                  >
+                    {alert.growth_rate}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-lg font-bold text-cyan-400">
+                      {alert.patient_count}
+                    </p>
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider">
+                      Linked patients
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">
+                      Shared Symptoms
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {alert.shared_symptoms.slice(0, 4).map((s) => (
+                        <span
+                          key={s}
+                          className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-white/50"
+                        >
+                          {s.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {alert.geographic_spread && (
+                  <div className="text-[10px] text-white/40">
+                    <span className="text-white/25">Geo: </span>
+                    {alert.geographic_spread}
+                  </div>
+                )}
+
+                {alert.travel_commonalities &&
+                  alert.travel_commonalities !== "No common travel" && (
+                    <div className="text-[10px] text-white/40">
+                      <span className="text-white/25">Travel: </span>
+                      {alert.travel_commonalities}
+                    </div>
+                  )}
+
+                {/* AI Recommended Action */}
+                <div className="pt-2 border-t border-cyan-500/10">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/60 mb-1.5">
+                    Recommended Actions
+                  </p>
+                  <p className="text-[11px] text-white/50 leading-relaxed">
+                    {alert.recommended_action}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Anomaly alerts */}
       <div>
         <div className="flex items-center gap-2 mb-3">

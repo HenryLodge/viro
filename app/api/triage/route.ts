@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { runTriage, type PatientData } from "@/lib/triage";
 import { rankHospitals, type Hospital } from "@/lib/hospital-matching";
+import { computeGraph, type PatientNode } from "@/lib/network-engine";
 
 /**
  * POST /api/triage
@@ -148,7 +149,72 @@ export async function POST(request: Request) {
       // Still return the triage result even if update fails
     }
 
-    /* ── 5. Return triage result + top 3 hospitals ── */
+    /* ── 5. Run network engine to detect clusters ── */
+    let networkAlerts: { cluster_label: string; patient_count: number; recommended_action: string }[] = [];
+    try {
+      const thirtyDaysAgo = new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const { data: recentPatients } = await supabase
+        .from("patients")
+        .select(
+          "id, full_name, age, symptoms, severity_flags, risk_factors, travel_history, exposure_history, triage_tier, lat, lng, created_at, status"
+        )
+        .gte("created_at", thirtyDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (recentPatients && recentPatients.length > 0) {
+        const normalized: PatientNode[] = recentPatients.map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          age: p.age,
+          symptoms: ensureArray(p.symptoms),
+          severity_flags: ensureArray(p.severity_flags),
+          risk_factors: ensureArray(p.risk_factors),
+          travel_history: p.travel_history,
+          exposure_history: p.exposure_history,
+          triage_tier: p.triage_tier,
+          lat: p.lat,
+          lng: p.lng,
+          created_at: p.created_at,
+          status: p.status,
+        }));
+
+        const graph = computeGraph(normalized);
+
+        // Persist new cluster alerts if any crossed threshold
+        if (graph.clusterAlerts.length > 0) {
+          for (const alert of graph.clusterAlerts) {
+            await supabase.from("cluster_alerts").upsert(
+              {
+                id: alert.id,
+                cluster_label: alert.cluster_label,
+                patient_count: alert.patient_count,
+                shared_symptoms: alert.shared_symptoms,
+                geographic_spread: alert.geographic_spread,
+                travel_commonalities: alert.travel_commonalities,
+                growth_rate: alert.growth_rate,
+                recommended_action: alert.recommended_action,
+              },
+              { onConflict: "id" }
+            );
+          }
+
+          networkAlerts = graph.clusterAlerts.map((a) => ({
+            cluster_label: a.cluster_label,
+            patient_count: a.patient_count,
+            recommended_action: a.recommended_action,
+          }));
+        }
+      }
+    } catch (netErr) {
+      // Network engine is non-critical — log and continue
+      console.error("Network engine error (non-critical):", netErr);
+    }
+
+    /* ── 6. Return triage result + top 3 hospitals + network alerts ── */
     return NextResponse.json({
       triage: triageResult,
       assigned_hospital: assignedHospital,
@@ -166,6 +232,7 @@ export async function POST(request: Request) {
         score: h.score,
         distance_km: h.distance_km,
       })),
+      network_alerts: networkAlerts,
       already_triaged: false,
     });
   } catch (error) {
@@ -174,4 +241,19 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+/* ── Helpers ── */
+
+function ensureArray(val: unknown): string[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }

@@ -636,3 +636,243 @@ VALUES
     now() - interval '13 hours 50 minutes'
   )
 ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================
+-- 5. CLUSTER-FRIENDLY PATIENTS (for Symptom Network Graph demo)
+--
+--   Cluster A (London travel + respiratory): 4 patients
+--   Cluster B (Boston local + gastrointestinal): 4 patients
+--   Isolated: 4 patients with distinct symptoms / no overlap
+-- ============================================================
+
+INSERT INTO public.patients (
+  id, user_id, full_name, age, symptoms, severity_flags, risk_factors,
+  travel_history, exposure_history, triage_tier, triage_reasoning,
+  risk_flags, assigned_hospital_id, status, lat, lng, created_at, updated_at
+)
+VALUES
+  -- ── CLUSTER A: London travel + respiratory symptoms (4 patients) ──
+  -- All traveled to London within last 14 days, share respiratory symptoms
+  (
+    'd0000000-0000-0000-0000-000000000013',
+    'c0000000-0000-0000-0000-000000000001',
+    'Oliver Bennett', 44,
+    '["fever","cough","shortness_of_breath","fatigue","body_aches"]',
+    '["difficulty_breathing","high_fever"]',
+    '[]',
+    'Returned from London, UK 6 days ago. Stayed in central London for business.',
+    'Met with colleagues who were later confirmed positive',
+    'urgent',
+    'Patient presents with respiratory symptoms consistent with cluster pattern. Recent travel to London overlaps with other cases.',
+    '["high_fever","difficulty_breathing","travel_exposure","confirmed_contact"]',
+    'a0000000-0000-0000-0000-000000000006',
+    'triaged',
+    40.7500, -73.9900,
+    now() - interval '18 hours',
+    now() - interval '17 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000014',
+    'c0000000-0000-0000-0000-000000000001',
+    'Amara Osei', 37,
+    '["fever","cough","shortness_of_breath","sore_throat","fatigue"]',
+    '["high_fever"]',
+    '[]',
+    'Returned from London, UK 8 days ago. Attended a large conference in Canary Wharf.',
+    'Conference had multiple attendees who later tested positive',
+    'urgent',
+    'Patient has respiratory symptoms with London travel history matching emerging cluster pattern.',
+    '["high_fever","travel_exposure","confirmed_contact"]',
+    'a0000000-0000-0000-0000-000000000007',
+    'triaged',
+    40.7580, -73.9855,
+    now() - interval '14 hours',
+    now() - interval '13 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000015',
+    'c0000000-0000-0000-0000-000000000001',
+    'Henry Calloway', 61,
+    '["fever","persistent_cough","shortness_of_breath","body_aches","fatigue"]',
+    '["difficulty_breathing","high_fever"]',
+    '["age_over_65"]',
+    'Returned from London, UK 5 days ago. Toured museums and public transport extensively.',
+    'No direct known contact but was in crowded venues',
+    'critical',
+    'Elderly patient with respiratory distress and London travel history. Part of emerging travel-linked cluster.',
+    '["high_fever","difficulty_breathing","elderly","travel_exposure"]',
+    'a0000000-0000-0000-0000-000000000001',
+    'triaged',
+    42.3510, -71.0620,
+    now() - interval '10 hours',
+    now() - interval '9 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000016',
+    'c0000000-0000-0000-0000-000000000001',
+    'Fatima Al-Hassan', 28,
+    '["fever","cough","shortness_of_breath","headache","body_aches"]',
+    '["high_fever"]',
+    '[]',
+    'Returned from London, UK 7 days ago. Stayed at a hostel in East London.',
+    'Hostel roommate had symptoms before departure',
+    'urgent',
+    'Young adult with respiratory symptoms and travel to London. Matches cluster A travel and symptom pattern.',
+    '["high_fever","travel_exposure","confirmed_contact"]',
+    'a0000000-0000-0000-0000-000000000008',
+    'triaged',
+    40.7420, -73.9880,
+    now() - interval '8 hours',
+    now() - interval '7 hours'
+  ),
+
+  -- ── CLUSTER B: Boston local + gastrointestinal symptoms (4 patients) ──
+  -- All in Boston metro area within 48 hours, share GI symptoms
+  (
+    'd0000000-0000-0000-0000-000000000017',
+    'c0000000-0000-0000-0000-000000000001',
+    'Maria Gonzalez', 39,
+    '["nausea","vomiting","diarrhea","abdominal_pain","fever","fatigue"]',
+    '["high_fever"]',
+    '[]',
+    'No recent travel',
+    'Attended community dinner event in Dorchester, Boston 3 days ago',
+    'urgent',
+    'Patient presents with gastrointestinal symptoms. Local Boston cluster pattern emerging.',
+    '["high_fever","potential_exposure"]',
+    'a0000000-0000-0000-0000-000000000001',
+    'triaged',
+    42.3200, -71.0600,
+    now() - interval '6 hours',
+    now() - interval '5 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000018',
+    'c0000000-0000-0000-0000-000000000001',
+    'Sean O''Brien', 47,
+    '["nausea","diarrhea","abdominal_pain","vomiting","body_aches","fatigue"]',
+    '[]',
+    '[]',
+    'No recent travel',
+    'Attended same community dinner event in Dorchester 3 days ago',
+    'routine',
+    'GI symptoms consistent with local foodborne or viral cluster in Boston area.',
+    '["potential_exposure"]',
+    'a0000000-0000-0000-0000-000000000003',
+    'triaged',
+    42.3150, -71.0550,
+    now() - interval '5 hours',
+    now() - interval '4 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000019',
+    'c0000000-0000-0000-0000-000000000001',
+    'Jennifer Tran', 52,
+    '["nausea","vomiting","diarrhea","abdominal_pain","fever"]',
+    '["high_fever"]',
+    '["diabetes"]',
+    'No recent travel',
+    'Lives near Dorchester; visited local restaurant that several sick patients also visited',
+    'urgent',
+    'GI symptoms with diabetes risk factor. Part of emerging Boston-area gastrointestinal cluster.',
+    '["high_fever","diabetes","potential_exposure"]',
+    'a0000000-0000-0000-0000-000000000002',
+    'triaged',
+    42.3100, -71.0580,
+    now() - interval '4 hours',
+    now() - interval '3 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000020',
+    'c0000000-0000-0000-0000-000000000001',
+    'Andre Jackson', 34,
+    '["nausea","diarrhea","abdominal_pain","vomiting","fatigue","headache"]',
+    '[]',
+    '[]',
+    'No recent travel',
+    'Attended community dinner event in Dorchester, Boston 3 days ago',
+    'routine',
+    'GI symptom pattern matches ongoing Boston cluster investigation.',
+    '["potential_exposure"]',
+    'a0000000-0000-0000-0000-000000000004',
+    'triaged',
+    42.3250, -71.0650,
+    now() - interval '3 hours',
+    now() - interval '2 hours'
+  ),
+
+  -- ── ISOLATED PATIENTS (4) — distinct symptoms, no cluster overlap ──
+  (
+    'd0000000-0000-0000-0000-000000000021',
+    'c0000000-0000-0000-0000-000000000001',
+    'Carlos Reyes', 22,
+    '["back_pain","joint_pain"]',
+    '[]',
+    '[]',
+    'None',
+    'No known exposure',
+    'self-care',
+    'Isolated musculoskeletal symptoms with no respiratory or GI component.',
+    '[]',
+    NULL,
+    'triaged',
+    33.7490, -84.3880,
+    now() - interval '20 hours',
+    now() - interval '19 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000022',
+    'c0000000-0000-0000-0000-000000000001',
+    'Anika Johansson', 40,
+    '["rash","itching","mild_fever"]',
+    '[]',
+    '[]',
+    'Returned from Amsterdam, Netherlands 15 days ago',
+    'No known contact',
+    'routine',
+    'Dermatological presentation with mild fever. No overlap with respiratory or GI clusters.',
+    '["travel_history"]',
+    'a0000000-0000-0000-0000-000000000014',
+    'triaged',
+    41.8800, -87.6300,
+    now() - interval '16 hours',
+    now() - interval '15 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000023',
+    'c0000000-0000-0000-0000-000000000001',
+    'Dimitri Volkov', 56,
+    '["ear_pain","dizziness","mild_headache"]',
+    '[]',
+    '[]',
+    'None',
+    'No known exposure',
+    'self-care',
+    'ENT symptoms without systemic features. No cluster affiliation.',
+    '[]',
+    NULL,
+    'triaged',
+    29.7600, -95.3700,
+    now() - interval '22 hours',
+    now() - interval '21 hours'
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000024',
+    'c0000000-0000-0000-0000-000000000001',
+    'Nkechi Adeyemi', 30,
+    '["eye_redness","blurred_vision"]',
+    '[]',
+    '[]',
+    'None',
+    'No known exposure',
+    'self-care',
+    'Ophthalmological symptoms only. No connection to known clusters.',
+    '[]',
+    NULL,
+    'triaged',
+    34.0520, -118.2440,
+    now() - interval '24 hours',
+    now() - interval '23 hours'
+  )
+ON CONFLICT (id) DO NOTHING;
