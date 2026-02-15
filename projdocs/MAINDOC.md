@@ -1,0 +1,15 @@
+Project Name: Viro
+What Viro does
+During an outbreak, the hardest problem isn’t just treating patients—it’s getting the right patients to the right care fast while hospitals and doctors are overwhelmed. SURGE is an AI-powered triage + routing system that collects structured patient intake data (symptoms, severity flags, risk factors, and recent travel/exposure history), estimates urgency tiers (critical / urgent / routine / self-care guidance), and then matches patients to nearby hospitals/clinics based on real-time capacity and doctor availability. For clinicians and public health teams, SURGE also monitors incoming symptom patterns across regions to detect unusual shifts (a possible sign of a changing outbreak, reporting artifacts, or variant-like behavior) and recommends containment actions like targeted messaging, pop-up clinics, and staffing reallocation.
+
+Layer 1 — Patient Intake & Triage (highest priority)
+This is your centerpiece. Build a web form or simple app where a user inputs symptoms, severity, risk factors, and exposure history. On the backend, an AI model processes that input and returns an urgency tier (critical / urgent / routine / self-care) with an explanation of why.
+Implementation: You don't need to train a custom model. Use an LLM (like Claude's API) with a well-crafted system prompt that acts as a triage engine. Feed it structured patient data and have it return a JSON response with the tier, reasoning, and key risk flags. This is fast to build and genuinely impressive in demo. Alternatively, if you want something more "traditional ML," a decision-tree or rule-based classifier works fine for a hackathon — you can define triage logic based on established clinical guidelines (like the Emergency Severity Index).
+Layer 2 — Smart Routing (medium priority)
+Once a patient has a triage tier, match them to a facility. For the hackathon, you don't need real hospital APIs. Create a mock dataset of 10–20 hospitals/clinics with attributes like current capacity, specialties available, distance from patient, and wait time. Then build a simple matching algorithm: filter by what the patient needs, rank by availability and proximity, return the top recommendation with a map view.
+Implementation: A lightweight scoring function works fine. Something like: weighted score = (capacity weight × available beds) + (distance weight × 1/distance) + (specialty match bonus). Display results on a map using something like Leaflet.js or Google Maps embed.
+
+
+Layer 3 — Global Epidemiological Network Globe
+The Vision:
+A rotating 3D globe where nodes are placed at geographic coordinates representing cities, hospitals, or monitoring regions. Nodes pulse and change size/color based on real-time symptom severity or case volume. Edges between nodes represent connections — patient transfers, outbreak spread paths, or resource sharing links. When an anomaly is detected in a region, that node flares up and the connecting edges highlight to show potential cascade paths.
