@@ -1,11 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+/* ── Metro area fallback options ── */
+
+const METRO_AREAS = [
+  { label: "Boston, MA", lat: 42.3601, lng: -71.0589 },
+  { label: "New York, NY", lat: 40.7128, lng: -74.006 },
+  { label: "Philadelphia, PA", lat: 39.9526, lng: -75.1652 },
+  { label: "Washington, D.C.", lat: 38.9072, lng: -77.0369 },
+  { label: "Baltimore, MD", lat: 39.2904, lng: -76.6122 },
+  { label: "Pittsburgh, PA", lat: 40.4406, lng: -79.9959 },
+  { label: "Hartford, CT", lat: 41.7658, lng: -72.6734 },
+  { label: "Atlanta, GA", lat: 33.749, lng: -84.388 },
+  { label: "Miami, FL", lat: 25.7617, lng: -80.1918 },
+  { label: "Charlotte, NC", lat: 35.2271, lng: -80.8431 },
+  { label: "Raleigh, NC", lat: 35.7796, lng: -78.6382 },
+  { label: "Tampa, FL", lat: 27.9506, lng: -82.4572 },
+  { label: "Orlando, FL", lat: 28.5383, lng: -81.3792 },
+  { label: "Nashville, TN", lat: 36.1627, lng: -86.7816 },
+  { label: "Chicago, IL", lat: 41.8781, lng: -87.6298 },
+  { label: "Cleveland, OH", lat: 41.4993, lng: -81.6944 },
+  { label: "Detroit, MI", lat: 42.3314, lng: -83.0458 },
+  { label: "Minneapolis, MN", lat: 44.9778, lng: -93.265 },
+  { label: "St. Louis, MO", lat: 38.627, lng: -90.1994 },
+  { label: "Columbus, OH", lat: 39.9612, lng: -82.9988 },
+  { label: "Houston, TX", lat: 29.7604, lng: -95.3698 },
+  { label: "Dallas, TX", lat: 32.7767, lng: -96.797 },
+  { label: "San Antonio, TX", lat: 29.4241, lng: -98.4936 },
+  { label: "Phoenix, AZ", lat: 33.4484, lng: -112.074 },
+  { label: "Denver, CO", lat: 39.7392, lng: -104.9903 },
+  { label: "Los Angeles, CA", lat: 34.0522, lng: -118.2437 },
+  { label: "San Francisco, CA", lat: 37.7749, lng: -122.4194 },
+  { label: "San Diego, CA", lat: 32.7157, lng: -117.1611 },
+  { label: "Seattle, WA", lat: 47.6062, lng: -122.3321 },
+  { label: "Portland, OR", lat: 45.5152, lng: -122.6784 },
+  { label: "Salt Lake City, UT", lat: 40.7608, lng: -111.891 },
+  { label: "New Orleans, LA", lat: 29.9511, lng: -90.0715 },
+  { label: "Honolulu, HI", lat: 21.3069, lng: -157.8583 },
+  { label: "Anchorage, AK", lat: 61.2181, lng: -149.9003 },
+] as const;
+
+type LocationStatus = "idle" | "detecting" | "acquired" | "denied" | "manual";
 
 /* ── Option lists ── */
 
@@ -83,8 +124,48 @@ export function IntakeForm({ prefillName }: IntakeFormProps) {
   const [travelHistory, setTravelHistory] = useState("");
   const [hasExposure, setHasExposure] = useState(false);
   const [exposureDetails, setExposureDetails] = useState("");
+  const [patientLat, setPatientLat] = useState<number | null>(null);
+  const [patientLng, setPatientLng] = useState<number | null>(null);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  const [selectedMetro, setSelectedMetro] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const detectLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
+    }
+    setLocationStatus("detecting");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPatientLat(position.coords.latitude);
+        setPatientLng(position.coords.longitude);
+        setLocationStatus("acquired");
+        setSelectedMetro("");
+      },
+      () => {
+        setLocationStatus("denied");
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  }, []);
+
+  function handleMetroChange(value: string) {
+    setSelectedMetro(value);
+    if (value) {
+      const metro = METRO_AREAS.find((m) => m.label === value);
+      if (metro) {
+        setPatientLat(metro.lat);
+        setPatientLng(metro.lng);
+        setLocationStatus("manual");
+      }
+    } else {
+      setPatientLat(null);
+      setPatientLng(null);
+      setLocationStatus("idle");
+    }
+  }
 
   function toggle(
     list: string[],
@@ -137,6 +218,8 @@ export function IntakeForm({ prefillName }: IntakeFormProps) {
         exposure_history: hasExposure
           ? exposureDetails || "Yes (no details provided)"
           : "No known exposure",
+        lat: patientLat,
+        lng: patientLng,
         status: "pending",
       })
       .select("id")
@@ -267,6 +350,99 @@ export function IntakeForm({ prefillName }: IntakeFormProps) {
                 rows={3}
                 className={cn(inputClass, "h-auto w-full resize-none rounded-lg border px-3 py-2.5 text-sm")}
               />
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* ── Card 6: Location ── */}
+      <Card>
+        <SectionHeading number={6} title="Your location" />
+        <p className="text-xs text-white/35 mt-1 mb-4">
+          We use your location to find the nearest hospitals. You can share your
+          browser location or pick the closest metro area.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+          {/* Detect button */}
+          <button
+            type="button"
+            onClick={detectLocation}
+            disabled={loading || locationStatus === "detecting"}
+            className={cn(
+              pillBase,
+              "flex items-center gap-2",
+              locationStatus === "acquired"
+                ? pillActive
+                : locationStatus === "detecting"
+                ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400"
+                : pillInactive
+            )}
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            {locationStatus === "detecting"
+              ? "Detecting…"
+              : locationStatus === "acquired"
+              ? "Location acquired"
+              : "Use my location"}
+          </button>
+
+          {/* Status + fallback */}
+          <div className="flex-1 space-y-2">
+            {locationStatus === "denied" && (
+              <p className="text-xs text-amber-400">
+                Location access was denied. Please select your nearest metro
+                area below.
+              </p>
+            )}
+
+            {/* Metro dropdown — always visible as a fallback option */}
+            <div className="space-y-1.5">
+              <Label className={labelClass}>
+                {locationStatus === "acquired"
+                  ? "Or override with a metro area"
+                  : "Select nearest metro area"}
+              </Label>
+              <select
+                value={selectedMetro}
+                onChange={(e) => handleMetroChange(e.target.value)}
+                disabled={loading}
+                className={cn(
+                  inputClass,
+                  "h-11 w-full rounded-lg border px-3 text-sm appearance-none"
+                )}
+              >
+                <option value="">— Select a city —</option>
+                {METRO_AREAS.map((m) => (
+                  <option key={m.label} value={m.label}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Show resolved coordinates for transparency */}
+            {patientLat !== null && patientLng !== null && (
+              <p className="text-xs text-white/30">
+                Coordinates: {patientLat.toFixed(4)}, {patientLng.toFixed(4)}
+              </p>
             )}
           </div>
         </div>
