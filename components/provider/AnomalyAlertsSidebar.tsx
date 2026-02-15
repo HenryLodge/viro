@@ -2,6 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import type { ClusterAlert } from "@/lib/network-engine";
+import { AiInsightsPanel } from "@/components/provider/AiInsightsPanel";
+import type { AiInsight } from "@/lib/ai-patterns";
+import type { NetworkFilterState } from "@/components/provider/NetworkFilterPanel";
 
 /* ── Types ── */
 
@@ -90,9 +93,19 @@ function timeAgo(dateStr: string): string {
 export function AnomalyAlertsSidebar({
   regions,
   clusterAlerts = [],
+  onClusterClick,
+  aiInsights = [],
+  aiInsightsLoading = false,
+  aiInsightsError = null,
+  onInsightFocus,
 }: {
   regions: RegionData[];
   clusterAlerts?: ClusterAlert[];
+  onClusterClick?: (clusterId: string) => void;
+  aiInsights?: AiInsight[];
+  aiInsightsLoading?: boolean;
+  aiInsightsError?: string | null;
+  onInsightFocus?: (filters: NetworkFilterState) => void;
 }) {
   const anomalies = regions
     .filter((r) => r.anomaly_flag)
@@ -118,7 +131,11 @@ export function AnomalyAlertsSidebar({
             {clusterAlerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-4 space-y-3"
+                className={cn(
+                  "rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-4 space-y-3",
+                  onClusterClick && "cursor-pointer hover:bg-cyan-500/[0.08] transition-colors"
+                )}
+                onClick={() => onClusterClick?.(alert.id)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -338,6 +355,16 @@ export function AnomalyAlertsSidebar({
           })}
         </div>
       </div>
+
+      {/* AI Insights (below existing alerts, network view only) */}
+      {(aiInsightsLoading || aiInsightsError || aiInsights.length > 0) && (
+        <AiInsightsPanel
+          insights={aiInsights}
+          loading={aiInsightsLoading}
+          error={aiInsightsError}
+          onFocus={onInsightFocus}
+        />
+      )}
     </div>
   );
 }

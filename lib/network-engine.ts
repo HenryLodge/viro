@@ -36,6 +36,11 @@ export interface GraphNode {
   age: number | null;
   symptoms: string[];
   location: string | null; // metro region name or null
+  riskFactors: string[];
+  travelHistory: string | null;
+  exposureHistory: string | null;
+  severityFlags: string[];
+  createdAt: string;
 }
 
 export interface GraphEdge {
@@ -85,7 +90,7 @@ const TRAVEL_WEIGHT = 0.30;
 const GEO_TEMPORAL_WEIGHT = 0.20;
 const EXPOSURE_WEIGHT = 0.15;
 
-const MIN_EDGE_WEIGHT = 0.20;
+const MIN_EDGE_WEIGHT = 0.45;
 const CLUSTER_SCORE_THRESHOLD = 2.5;
 const GEO_PROXIMITY_KM = 80;
 const TEMPORAL_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -514,6 +519,11 @@ export function computeGraph(patients: PatientNode[]): NetworkGraph {
     age: p.age,
     symptoms: p.symptoms,
     location: guessMetro(p),
+    riskFactors: p.risk_factors,
+    travelHistory: p.travel_history,
+    exposureHistory: p.exposure_history,
+    severityFlags: p.severity_flags,
+    createdAt: p.created_at,
   }));
 
   // Detect clusters

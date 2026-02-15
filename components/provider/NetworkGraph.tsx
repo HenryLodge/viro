@@ -7,6 +7,8 @@ import type {
   GraphEdge,
   Cluster,
 } from "@/lib/network-engine";
+import type { NetworkFilterState } from "@/components/provider/NetworkFilterPanel";
+import { nodeMatchesFilter, isFilterActive } from "@/components/provider/NetworkFilterPanel";
 
 /* ── Dynamically import ForceGraph2D (client-only, uses canvas) ── */
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
@@ -35,6 +37,9 @@ interface NetworkGraphProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   clusters: Cluster[];
+  activeFilters?: NetworkFilterState | null;
+  timeLimit?: Date | null;
+  onNodeSelect?: (nodeId: string) => void;
 }
 
 /* ── Internal data shapes for react-force-graph ── */
@@ -77,6 +82,9 @@ export function NetworkGraph({
   nodes,
   edges,
   clusters,
+  activeFilters,
+  timeLimit,
+  onNodeSelect,
 }: NetworkGraphProps) {
   /* ── Refs & state ── */
   const containerRef = useRef<HTMLDivElement>(null);
@@ -146,22 +154,53 @@ export function NetworkGraph({
     return () => observer.disconnect();
   }, []);
 
+  /* ── Filtered node set (filters + time) ── */
+  const filteredNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const n of nodes) {
+      if (!nodeMatchesFilter(n, activeFilters ?? null)) continue;
+      if (timeLimit && n.createdAt && new Date(n.createdAt) > timeLimit) continue;
+      ids.add(n.id);
+    }
+    return ids;
+  }, [nodes, activeFilters, timeLimit]);
+
+  const filtersActive = isFilterActive(activeFilters ?? null) || timeLimit != null;
+
   /* ── Graph data ── */
   const graphData = useMemo(
     () => ({
-      nodes: nodes.map((n) => ({
-        ...n,
-        clusterAlertId: nodeClusterMap.get(n.id),
-      })) as FGNode[],
-      links: edges.map((e) => ({
-        source: e.source,
-        target: e.target,
-        weight: e.weight,
-        reason: e.reason,
-      })) as FGLink[],
+      nodes: nodes
+        .filter((n) => filteredNodeIds.has(n.id))
+        .map((n) => ({
+          ...n,
+          clusterAlertId: nodeClusterMap.get(n.id),
+        })) as FGNode[],
+      links: edges
+        .filter(
+          (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
+        )
+        .map((e) => ({
+          source: e.source,
+          target: e.target,
+          weight: e.weight,
+          reason: e.reason,
+        })) as FGLink[],
     }),
-    [nodes, edges, nodeClusterMap]
+    [nodes, edges, nodeClusterMap, filteredNodeIds]
   );
+
+  /* ── Tune d3 forces for better spread ── */
+  useEffect(() => {
+    if (!graphRef.current) return;
+    const fg = graphRef.current;
+    // Stronger repulsion to spread nodes apart
+    fg.d3Force("charge")?.strength(-120).distanceMax(300);
+    // Longer links so clusters separate visually
+    fg.d3Force("link")?.distance(40);
+    // Re-heat simulation to apply new forces
+    fg.d3ReheatSimulation();
+  }, [graphData]);
 
   /* ══════════════════════════════════════════════════════════════
      Node canvas rendering — Obsidian-style soft glow + labels
@@ -288,13 +327,14 @@ export function NetworkGraph({
     setMousePos({ x: e.clientX, y: e.clientY });
   }, []);
 
-  /* ── Click to focus (center + zoom) ── */
+  /* ── Click to focus (center + zoom) + drill-down ── */
   const handleNodeClick = useCallback((node: FGNode) => {
     if (graphRef.current && node.x != null && node.y != null) {
       graphRef.current.centerAt(node.x, node.y, 400);
       graphRef.current.zoom(3, 400);
     }
-  }, []);
+    onNodeSelect?.(node.id);
+  }, [onNodeSelect]);
 
   /* ── Double-click background to reset view ── */
   const handleBackgroundClick = useCallback(() => {
@@ -345,9 +385,12 @@ export function NetworkGraph({
           linkWidth={getLinkWidth as never}
           linkColor={getLinkColor as never}
           backgroundColor={CANVAS_BG}
-          cooldownTicks={60}
-          d3AlphaDecay={0.04}
-          d3VelocityDecay={0.3}
+          cooldownTicks={100}
+          d3AlphaDecay={0.02}
+          d3VelocityDecay={0.25}
+          d3AlphaMin={0.005}
+          nodeRelSize={1}
+          linkDirectionalParticles={0}
         />
       )}
 
@@ -409,11 +452,15 @@ export function NetworkGraph({
       <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/[0.06]">
         <div className="flex items-center gap-4 text-[10px] text-white/50">
           <span>
-            <span className="text-white/80 font-semibold">{nodes.length}</span>{" "}
+            <span className="text-white/80 font-semibold">
+              {filtersActive ? `${graphData.nodes.length}/${nodes.length}` : nodes.length}
+            </span>{" "}
             nodes
           </span>
           <span>
-            <span className="text-white/80 font-semibold">{edges.length}</span>{" "}
+            <span className="text-white/80 font-semibold">
+              {filtersActive ? graphData.links.length : edges.length}
+            </span>{" "}
             edges
           </span>
           <span>

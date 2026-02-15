@@ -11,7 +11,7 @@ import { computeGraph, type PatientNode } from "@/lib/network-engine";
  * Fetches recent triaged patients (last 30 days) and runs the
  * network engine to compute similarity edges, clusters, and alerts.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -25,9 +25,14 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Fetch patients from last 30 days with relevant columns
-    const thirtyDaysAgo = new Date(
-      Date.now() - 30 * 24 * 60 * 60 * 1000
+    // Parse optional query params
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(Number(searchParams.get("limit")) || 500, 1000);
+    const lookbackDays = Number(searchParams.get("days")) || 90;
+
+    // Fetch patients with relevant columns
+    const cutoff = new Date(
+      Date.now() - lookbackDays * 24 * 60 * 60 * 1000
     ).toISOString();
 
     const { data: patients, error } = await supabase
@@ -35,9 +40,9 @@ export async function GET() {
       .select(
         "id, full_name, age, symptoms, severity_flags, risk_factors, travel_history, exposure_history, triage_tier, lat, lng, created_at, status"
       )
-      .gte("created_at", thirtyDaysAgo)
+      .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(limit);
 
     if (error) {
       console.error("Network API: failed to fetch patients", error);
