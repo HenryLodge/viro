@@ -155,6 +155,16 @@ export default function ReportsPage() {
       if (res.ok) {
         const report = await res.json();
         if (report.id) {
+          // Store the full report in sessionStorage so the detail page
+          // can display it even if the DB table doesn't exist yet
+          try {
+            sessionStorage.setItem(
+              `viro-report-${report.id}`,
+              JSON.stringify(report),
+            );
+          } catch {
+            // sessionStorage may be unavailable / full — non-critical
+          }
           router.push(`/provider/reports/${report.id}`);
         } else {
           // Report generated but not stored -- refresh list

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { pdf } from "@react-pdf/renderer";
+import { ReportPDFDocument } from "@/components/provider/ReportPDF";
 import type { ReportSection } from "@/lib/ai-report";
 
 /* ══════════════════════════════════════════════════════════════
@@ -203,6 +205,7 @@ export default function ReportDetailPage() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const fetchReport = useCallback(async () => {
     try {
@@ -211,6 +214,19 @@ export default function ReportDetailPage() {
         const data = await res.json();
         setReport(data as ReportData);
       } else {
+        // API failed — try sessionStorage (report may have been generated
+        // but the reports table doesn't exist in the database yet)
+        try {
+          const cached = sessionStorage.getItem(`viro-report-${reportId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached) as ReportData;
+            setReport(parsed);
+            return;
+          }
+        } catch {
+          // sessionStorage unavailable — fall through to error
+        }
+
         const errData = await res.json().catch(() => ({}));
         setError(
           (errData as { error?: string }).error ?? "Failed to load report",
@@ -218,6 +234,17 @@ export default function ReportDetailPage() {
       }
     } catch (err) {
       console.error("Failed to fetch report:", err);
+      // Also try sessionStorage on network errors
+      try {
+        const cached = sessionStorage.getItem(`viro-report-${reportId}`);
+        if (cached) {
+          const parsed = JSON.parse(cached) as ReportData;
+          setReport(parsed);
+          return;
+        }
+      } catch {
+        // fall through
+      }
       setError("Failed to load report");
     } finally {
       setLoading(false);
@@ -343,6 +370,79 @@ export default function ReportDetailPage() {
               </span>
             </div>
           </div>
+
+          {/* Download PDF */}
+          <button
+            disabled={pdfLoading}
+            onClick={async () => {
+              setPdfLoading(true);
+              try {
+                const blob = await pdf(
+                  <ReportPDFDocument
+                    title={report.title}
+                    audience={report.audience}
+                    summary={report.summary}
+                    sections={report.sections}
+                    patientCount={report.patient_count}
+                    clusterCount={report.cluster_count}
+                    dateRangeStart={report.date_range_start}
+                    dateRangeEnd={report.date_range_end}
+                    createdAt={report.created_at}
+                  />,
+                ).toBlob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${report.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              } catch (err) {
+                console.error("PDF generation failed:", err);
+              } finally {
+                setPdfLoading(false);
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-medium text-white/50 hover:text-white/70 hover:bg-white/[0.06] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {pdfLoading ? (
+              <svg
+                className="h-3.5 w-3.5 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                />
+              </svg>
+            )}
+            {pdfLoading ? "Generating PDF..." : "Download PDF"}
+          </button>
         </div>
       </div>
 

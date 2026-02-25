@@ -39,6 +39,14 @@ export async function GET(
       .single();
 
     if (error) {
+      // If the reports table doesn't exist yet, give a clear message
+      if (error.code === "PGRST205" || error.message?.includes("schema cache")) {
+        console.warn("Report GET: reports table not found — run the migration in supabase/migrations/20260215000003_reports.sql");
+        return NextResponse.json(
+          { error: "Reports table not yet created. The report may be available in your browser session.", _tableNotFound: true },
+          { status: 404 },
+        );
+      }
       console.error("Report GET: failed to fetch report", error);
       return NextResponse.json(
         { error: "Report not found", details: error.message },

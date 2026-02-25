@@ -165,7 +165,7 @@ export function aggregateGraphData(
   /* ── 1. Symptom co-occurrence matrix (top 15 pairs) ── */
   const pairCounts = new Map<string, number>();
   for (const n of nodes) {
-    const syms = [...new Set(n.symptoms)].sort();
+    const syms = Array.from(new Set(n.symptoms)).sort();
     for (let i = 0; i < syms.length; i++) {
       for (let j = i + 1; j < syms.length; j++) {
         const key = `${syms[i]}|${syms[j]}`;
@@ -191,7 +191,7 @@ export function aggregateGraphData(
       regionPrior7.set(region, (regionPrior7.get(region) ?? 0) + 1);
     }
   }
-  const allRegions = new Set([...regionLast7.keys(), ...regionPrior7.keys()]);
+  const allRegions = new Set([...Array.from(regionLast7.keys()), ...Array.from(regionPrior7.keys())]);
   const casesPerRegionPerDay = Array.from(allRegions)
     .map((region) => {
       const last7 = regionLast7.get(region) ?? 0;

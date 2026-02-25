@@ -50,6 +50,11 @@ export async function GET() {
       .limit(50);
 
     if (error) {
+      // If the reports table doesn't exist yet, return an empty list
+      if (error.code === "PGRST205" || error.message?.includes("schema cache")) {
+        console.warn("Reports GET: reports table not found — returning empty list. Run the migration in supabase/migrations/20260215000003_reports.sql");
+        return NextResponse.json({ reports: [], _tableNotFound: true });
+      }
       console.error("Reports GET: failed to fetch reports", error);
       return NextResponse.json(
         { error: "Failed to fetch reports", details: error.message },
